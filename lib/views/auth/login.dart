@@ -52,7 +52,7 @@ class _SignInScreenState extends State<SignInScreen> {
         // Navigate to the next page
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const NavigationPage()),
+          MaterialPageRoute(builder: (context) => const NavBar()),
         );
       } else {
         // If the user is not found, prompt them to sign up
@@ -87,7 +87,7 @@ class _SignInScreenState extends State<SignInScreen> {
         SnackBar(content: Text("Welcome back, ${user.email}!")),
       );
       Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => const NavigationPage()));
+          MaterialPageRoute(builder: (context) => const NavBar()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(

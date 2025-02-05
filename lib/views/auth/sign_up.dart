@@ -41,7 +41,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
         SnackBar(content: Text("User signed up: ${user.email}")),
       );
       Navigator.pushReplacement(context,
-          MaterialPageRoute(builder: (context) => const NavigationPage()));
+          MaterialPageRoute(builder: (context) => const NavBar()));
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("User already exists")),
@@ -62,7 +62,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       );
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => const NavigationPage()),
+        MaterialPageRoute(builder: (context) => const NavBar()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(

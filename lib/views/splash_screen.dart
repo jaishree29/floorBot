@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:floorbot/utils/colors.dart';
 import 'package:floorbot/views/auth/sign_up.dart';
 import 'package:floorbot/views/navbar.dart';
 import 'package:flutter/material.dart';
@@ -26,7 +27,7 @@ class SplashScreenState extends State<SplashScreen> {
       if (isLoggedIn != null) {
         if (isLoggedIn) {
           Navigator.pushReplacement(context,
-              MaterialPageRoute(builder: (context) => const NavigationPage()));
+              MaterialPageRoute(builder: (context) => const NavBar()));
         } else {
           Navigator.pushReplacement(
             context,
@@ -45,7 +46,7 @@ class SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return const Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: FColors.primary,
       body: Center(
         child: Text(
           'FloorBot',

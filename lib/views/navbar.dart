@@ -150,10 +150,10 @@ class NavBar extends StatefulWidget {
   const NavBar({super.key});
 
   @override
-  State<NavBar> createState() => _NavbarState();
+  State<NavBar> createState() => _NavBarState();
 }
 
-class _NavbarState extends State<NavBar> {
+class _NavBarState extends State<NavBar> {
   int screenIndex = 0;
   @override
   Widget build(BuildContext context) {

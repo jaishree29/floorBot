@@ -1,4 +1,5 @@
 import 'package:floorbot/controllers/auth_controller.dart';
+import 'package:floorbot/utils/colors.dart';
 import 'package:floorbot/views/auth/sign_up.dart';
 import 'package:floorbot/views/splash_screen.dart';
 import 'package:flutter/material.dart';
@@ -33,43 +34,61 @@ class _FAppDrawerState extends State<FAppDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    return Drawer(
-      width: 250,
-      shadowColor: Colors.grey,
-      elevation: 5.0,
-      shape: const Border(right: BorderSide.none),
-      backgroundColor: Colors.white,
-      child: ListView(
-        children: <Widget>[
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(
-                height: 30,
-              ),
-              ListTile(
-                leading: const Icon(Icons.account_circle),
-                title: const Text('Account'),
-                onTap: () {},
-              ),
-              ListTile(
-                leading: const Icon(Icons.settings),
-                title: const Text('Settings'),
-                onTap: () {},
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10.0),
-                child: ElevatedButton(
-                  onPressed: _userLogOut,
-                  child: Text('Log Out'),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 12.0),
+      child: Drawer(
+        width: 250,
+        shadowColor: Colors.grey,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          side: BorderSide(
+            color: FColors.primary.withOpacity(0.3),
+          ),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        backgroundColor: Colors.white,
+        child: ListView(
+          children: <Widget>[
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const SizedBox(
+                  height: 30,
                 ),
-              ),
-            ],
-          )
-        ],
+                ListTile(
+                  leading: const Icon(Icons.account_circle),
+                  title: const Text('Account'),
+                  onTap: () {},
+                ),
+                ListTile(
+                  leading: const Icon(Icons.settings),
+                  title: const Text('Settings'),
+                  onTap: () {},
+                ),
+                const SizedBox(
+                  height: 30,
+                ),
+                Center(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      elevation: 0,
+                      backgroundColor: FColors.primary,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    onPressed: _userLogOut,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 60),
+                      child: Text('Log Out'),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          ],
+        ),
       ),
     );
   }

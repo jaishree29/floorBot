@@ -52,7 +52,7 @@ class SplashScreenState extends State<SplashScreen> {
           'FloorBot',
           style: TextStyle(
             fontSize: 50,
-            fontWeight: FontWeight.w500,
+            fontWeight: FontWeight.bold,
             fontStyle: FontStyle.italic,
             color: Colors.white,
           ),

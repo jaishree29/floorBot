@@ -2,6 +2,7 @@ import 'package:floorbot/utils/colors.dart';
 import 'package:floorbot/views/home/app_drawer.dart';
 import 'package:floorbot/views/notifications/notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,6 +16,16 @@ class _HomePageState extends State<HomePage>
   late AnimationController _controller;
   late Animation<Offset> _animation;
   bool _isDrawerOpen = false;
+
+  final YoutubePlayerController _yController = YoutubePlayerController(
+    initialVideoId: 'Yf8MuJUGLlI',
+    flags: YoutubePlayerFlags(
+      loop: true,
+      autoPlay: true,
+      mute: false,
+    ),
+  );
+
   @override
   void initState() {
     super.initState();
@@ -36,6 +47,7 @@ class _HomePageState extends State<HomePage>
   @override
   void dispose() {
     _controller.dispose();
+    _yController.dispose();
     super.dispose();
   }
 
@@ -52,6 +64,8 @@ class _HomePageState extends State<HomePage>
 
   @override
   Widget build(BuildContext context) {
+    final screenHeight = MediaQuery.of(context).size.height;
+    final videoHeight = screenHeight * 0.25;
     return Scaffold(
       appBar: AppBar(
         toolbarHeight: 80,
@@ -121,11 +135,111 @@ class _HomePageState extends State<HomePage>
       body: SingleChildScrollView(
         child: Stack(
           children: [
-             // Drawer
+            Column(
+              children: [
+                // YouTube Video Player
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    height: videoHeight,
+                    width: double.infinity,
+                    child: YoutubePlayer(
+                      controller: _yController,
+                      showVideoProgressIndicator: true,
+                      progressIndicatorColor: Colors.amber,
+                      progressColors: const ProgressBarColors(
+                        playedColor: Colors.amber,
+                        handleColor: Colors.amberAccent,
+                      ),
+                      onReady: () {
+                        _yController.addListener(() {});
+                      },
+                    ),
+                  ),
+                ),
+                // Other content can go here
+                // For example, you can add more widgets below the video player
+                SizedBox(
+                  height: 20,
+                ),
+                Text(
+                  'Welcome to FloorBot',
+                  style: TextStyle(
+                    color: FColors.primary,
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 8.0),
+                  child: Text(
+                    'FloorBot is a smart cleaning device which can help you in your daily life!',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: FColors.primary,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Transform.rotate(
+                      angle: 11,
+                      child: Icon(
+                        Icons.battery_charging_full_rounded,
+                        size: 50,
+                        color: FColors.primary,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(
+                      '75%',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: FColors.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                // Battery Icon and Level
+                SizedBox(
+                  height: 30,
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: FColors.light,
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(60),
+                    child: Text(
+                      'START',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: FColors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  height: 30,
+                ),
+              ],
+            ),
             Visibility(
               visible: _isDrawerOpen,
               child: SizedBox(
-                height: MediaQuery.of(context).size.height * 0.5,
+                height: screenHeight * 0.5,
                 child: SlideTransition(
                   position: _animation,
                   child: const FAppDrawer(),

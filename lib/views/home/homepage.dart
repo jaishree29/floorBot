@@ -1,5 +1,6 @@
 import 'package:floorbot/utils/colors.dart';
 import 'package:floorbot/views/home/app_drawer.dart';
+import 'package:floorbot/views/home/ble_scanner.dart';
 import 'package:floorbot/views/notifications/notifications.dart';
 import 'package:flutter/material.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
@@ -186,51 +187,118 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
                 SizedBox(
-                  height: 30,
+                  height: 20,
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Transform.rotate(
-                      angle: 11,
-                      child: Icon(
-                        Icons.battery_charging_full_rounded,
-                        size: 50,
-                        color: FColors.primary,
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BluetoothScreen(),
                       ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: FColors.primary.withOpacity(0.2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
                     ),
-                    SizedBox(width: 8),
-                    Text(
-                      '75%',
-                      style: TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                        color: FColors.primary,
-                      ),
-                    ),
-                  ],
-                ),
-                // Battery Icon and Level
-                SizedBox(
-                  height: 30,
-                ),
-                Container(
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: FColors.light,
+                    foregroundColor: Colors.white,
                   ),
                   child: Padding(
-                    padding: const EdgeInsets.all(60),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 60.0,
+                      vertical: 10,
+                    ),
                     child: Text(
-                      'START',
+                      'Connect',
                       style: TextStyle(
-                        fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: FColors.primary,
+                        fontSize: 20,
                       ),
                     ),
                   ),
                 ),
+                // Container(
+                //   decoration: BoxDecoration(
+                //     color: FColors.primary.withOpacity(0.3),
+                //     borderRadius: BorderRadius.circular(10),
+                //   ),
+                //   child: Padding(
+                //     padding: const EdgeInsets.symmetric(
+                //       horizontal: 60.0,
+                //       vertical: 10,
+                //     ),
+                //     child: Text(
+                //       'Connect',
+                //       style: TextStyle(
+                //         color: FColors.primary,
+                //         fontWeight: FontWeight.bold,
+                //         fontSize: 20,
+                //       ),
+                //     ),
+                //   ),
+                // ),
+                SizedBox(
+                  height: 20,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 20.0,
+                    vertical: 8.0,
+                  ),
+                  child: Text(
+                    'Turn on your bluetooth to connect with nearby devices.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: FColors.primary,
+                      fontSize: 18,
+                    ),
+                  ),
+                ),
+                // Row(
+                //   mainAxisAlignment: MainAxisAlignment.center,
+                //   children: [
+                //     Transform.rotate(
+                //       angle: 11,
+                //       child: Icon(
+                //         Icons.battery_charging_full_rounded,
+                //         size: 50,
+                //         color: FColors.primary,
+                //       ),
+                //     ),
+                //     SizedBox(width: 8),
+                //     Text(
+                //       '75%',
+                //       style: TextStyle(
+                //         fontSize: 20,
+                //         fontWeight: FontWeight.bold,
+                //         color: FColors.primary,
+                //       ),
+                //     ),
+                //   ],
+                // ),
+                // // Battery Icon and Level
+                // SizedBox(
+                //   height: 30,
+                // ),
+                // Container(
+                //   decoration: BoxDecoration(
+                //     shape: BoxShape.circle,
+                //     color: FColors.light,
+                //   ),
+                //   child: Padding(
+                //     padding: const EdgeInsets.all(60),
+                //     child: Text(
+                //       'START',
+                //       style: TextStyle(
+                //         fontSize: 20,
+                //         fontWeight: FontWeight.bold,
+                //         color: FColors.primary,
+                //       ),
+                //     ),
+                //   ),
+                // ),
                 SizedBox(
                   height: 30,
                 ),

@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:floorbot/app.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+
+  FlutterBluePlus.setLogLevel(LogLevel.verbose, color: true);
   // Load environment variables
   await dotenv.load(fileName: ".env");
 

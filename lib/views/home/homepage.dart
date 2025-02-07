@@ -1,8 +1,11 @@
+import 'package:floorbot/controllers/ble_controller.dart';
 import 'package:floorbot/utils/colors.dart';
 import 'package:floorbot/views/home/app_drawer.dart';
-import 'package:floorbot/views/home/ble_scanner.dart';
 import 'package:floorbot/views/notifications/notifications.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:get/get.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
 class HomePage extends StatefulWidget {
@@ -14,6 +17,8 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
+  final BluetoothController controller = Get.put(BluetoothController());
+
   late AnimationController _controller;
   late Animation<Offset> _animation;
   bool _isDrawerOpen = false;
@@ -23,13 +28,14 @@ class _HomePageState extends State<HomePage>
     flags: YoutubePlayerFlags(
       loop: true,
       autoPlay: true,
-      mute: false,
+      mute: true,
     ),
   );
 
   @override
   void initState() {
     super.initState();
+    _requestPermissions();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -43,6 +49,15 @@ class _HomePageState extends State<HomePage>
         curve: Curves.easeOut,
       ),
     );
+  }
+
+  Future<void> _requestPermissions() async {
+    await [
+      Permission.bluetooth,
+      Permission.bluetoothScan,
+      Permission.bluetoothConnect,
+      Permission.locationWhenInUse,
+    ].request();
   }
 
   @override
@@ -69,6 +84,7 @@ class _HomePageState extends State<HomePage>
     final videoHeight = screenHeight * 0.25;
     return Scaffold(
       appBar: AppBar(
+        surfaceTintColor: Colors.white24,
         toolbarHeight: 80,
         backgroundColor: Colors.transparent,
         leading: InkWell(
@@ -162,10 +178,7 @@ class _HomePageState extends State<HomePage>
                   ),
                 ),
                 // Other content can go here
-                // For example, you can add more widgets below the video player
-                SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 20),
                 Text(
                   'Welcome to FloorBot',
                   style: TextStyle(
@@ -186,20 +199,36 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
-                SizedBox(
-                  height: 20,
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 8.0),
+                  child: Text(
+                    '*Turn on your bluetooth to connect with nearby devices.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: FColors.primary,
+                      fontSize: 14,
+                    ),
+                  ),
                 ),
+                const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => BluetoothScreen(),
-                      ),
-                    );
+                  onPressed: () async {
+                    if (await Permission.bluetoothScan.isGranted &&
+                        await Permission.bluetoothConnect.isGranted &&
+                        await Permission.locationWhenInUse.isGranted) {
+                      controller.scanDevices();
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Permissions not granted'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: FColors.primary.withOpacity(0.2),
+                    backgroundColor: FColors.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -207,11 +236,9 @@ class _HomePageState extends State<HomePage>
                   ),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 60.0,
-                      vertical: 10,
-                    ),
+                        horizontal: 60.0, vertical: 10),
                     child: Text(
-                      'Connect',
+                      'Scan for devices',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
@@ -219,89 +246,25 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
-                // Container(
-                //   decoration: BoxDecoration(
-                //     color: FColors.primary.withOpacity(0.3),
-                //     borderRadius: BorderRadius.circular(10),
-                //   ),
-                //   child: Padding(
-                //     padding: const EdgeInsets.symmetric(
-                //       horizontal: 60.0,
-                //       vertical: 10,
-                //     ),
-                //     child: Text(
-                //       'Connect',
-                //       style: TextStyle(
-                //         color: FColors.primary,
-                //         fontWeight: FontWeight.bold,
-                //         fontSize: 20,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                SizedBox(
-                  height: 20,
-                ),
+                const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 20.0,
-                    vertical: 8.0,
-                  ),
-                  child: Text(
-                    'Turn on your bluetooth to connect with nearby devices.',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: FColors.primary,
-                      fontSize: 18,
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      'Available devices:',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: FColors.primary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
-                // Row(
-                //   mainAxisAlignment: MainAxisAlignment.center,
-                //   children: [
-                //     Transform.rotate(
-                //       angle: 11,
-                //       child: Icon(
-                //         Icons.battery_charging_full_rounded,
-                //         size: 50,
-                //         color: FColors.primary,
-                //       ),
-                //     ),
-                //     SizedBox(width: 8),
-                //     Text(
-                //       '75%',
-                //       style: TextStyle(
-                //         fontSize: 20,
-                //         fontWeight: FontWeight.bold,
-                //         color: FColors.primary,
-                //       ),
-                //     ),
-                //   ],
-                // ),
-                // // Battery Icon and Level
-                // SizedBox(
-                //   height: 30,
-                // ),
-                // Container(
-                //   decoration: BoxDecoration(
-                //     shape: BoxShape.circle,
-                //     color: FColors.light,
-                //   ),
-                //   child: Padding(
-                //     padding: const EdgeInsets.all(60),
-                //     child: Text(
-                //       'START',
-                //       style: TextStyle(
-                //         fontSize: 20,
-                //         fontWeight: FontWeight.bold,
-                //         color: FColors.primary,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                SizedBox(
-                  height: 30,
-                ),
+                _buildList(context),
+                const SizedBox(height: 30),
               ],
             ),
             Visibility(
@@ -317,6 +280,83 @@ class _HomePageState extends State<HomePage>
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildList(BuildContext context) {
+    return GetBuilder<BluetoothController>(
+      builder: (controller) {
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              StreamBuilder<List<ScanResult>>(
+                stream: controller.scanResult,
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  } else if (snapshot.hasError) {
+                    return Center(
+                      child: Text(
+                        'Error: ${snapshot.error}',
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    );
+                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return Card(
+                      color: FColors.primary.withOpacity(0.2),
+                      elevation: 0,
+                      // margin: const EdgeInsets.symmetric(vertical: 5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(12),
+                        title: Center(
+                          child: Text(
+                            'No devices found',
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
+                  return ListView.builder(
+                    shrinkWrap:
+                        true, // Add this to make the ListView scrollable inside a Column
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Disable ListView's own scrolling
+                    itemCount: snapshot.data!.length,
+                    itemBuilder: (context, index) {
+                      final data = snapshot.data![index];
+                      return Card(
+                        color: FColors.primary.withOpacity(0.1),
+                        elevation: 0,
+                        margin: const EdgeInsets.symmetric(vertical: 5),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(12),
+                          title: Text(
+                            data.device.platformName.isNotEmpty
+                                ? data.device.platformName
+                                : "Unknown Device",
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          subtitle: Text(data.device.remoteId.str),
+                          trailing: Text("RSSI: ${data.rssi}"),
+                        ),
+                      );
+                    },
+                  );
+                },
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

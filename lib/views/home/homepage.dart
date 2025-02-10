@@ -28,7 +28,7 @@ class _HomePageState extends State<HomePage>
     flags: YoutubePlayerFlags(
       loop: true,
       autoPlay: true,
-      mute: true,
+      mute: false,
     ),
   );
 
@@ -330,6 +330,9 @@ class _HomePageState extends State<HomePage>
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final data = snapshot.data![index];
+                      ScanResult r = snapshot.data!.last;
+                      print(
+                          '${r.device.remoteId}: "${r.advertisementData.advName}" found!');
                       return Card(
                         color: FColors.primary.withOpacity(0.1),
                         elevation: 0,
@@ -346,7 +349,24 @@ class _HomePageState extends State<HomePage>
                             style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           subtitle: Text(data.device.remoteId.str),
-                          trailing: Text("RSSI: ${data.rssi}"),
+                          trailing: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text("RSSI: ${data.rssi}"),
+                              const SizedBox(width: 10),
+                              ElevatedButton(
+                                onPressed: () async {
+                                  await controller.connectToDevice(data.device);
+                                  if (controller.isConnected.value) {
+                                    // Send text to the connected device
+                                    await controller
+                                        .sendTextToDevice("Hello, Device!");
+                                  }
+                                },
+                                child: const Text('Connect'),
+                              ),
+                            ],
+                          ),
                         ),
                       );
                     },

@@ -323,10 +323,8 @@ class _HomePageState extends State<HomePage>
                   }
 
                   return ListView.builder(
-                    shrinkWrap:
-                        true, // Add this to make the ListView scrollable inside a Column
-                    physics:
-                        const NeverScrollableScrollPhysics(), // Disable ListView's own scrolling
+                    shrinkWrap: true,
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: snapshot.data!.length,
                     itemBuilder: (context, index) {
                       final data = snapshot.data![index];

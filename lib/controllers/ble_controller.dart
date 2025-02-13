@@ -6,7 +6,8 @@ import 'package:permission_handler/permission_handler.dart';
 class BluetoothController extends GetxController {
   var scanResults = <ScanResult>[].obs;
   var isConnected = false.obs; // Track connection status
-  BluetoothDevice? connectedDevice; // Store the connected device
+  var connectedDevice =
+      Rx<BluetoothDevice?>(null); // Store the connected device
   BluetoothCharacteristic?
       characteristic; // Store the characteristic for data transmission
 
@@ -36,15 +37,13 @@ class BluetoothController extends GetxController {
 
   Future<void> connectToDevice(BluetoothDevice device) async {
     try {
-      
       // Stop scanning before connecting
       await FlutterBluePlus.stopScan();
 
       // Connect to the device
       await device.connect(autoConnect: true, mtu: null);
       isConnected.value = true;
-      connectedDevice = device;
-      
+      connectedDevice.value = device;
 
       // Discover services and characteristics
       List<BluetoothService> services = await device.discoverServices();
@@ -88,7 +87,7 @@ class BluetoothController extends GetxController {
   }
 
   Future<void> sendTextToDevice(String text) async {
-    if (connectedDevice == null || characteristic == null) {
+    if (connectedDevice.value == null || characteristic == null) {
       debugPrint("No device connected or characteristic not found.");
       Get.snackbar(
         "Error",
@@ -109,7 +108,7 @@ class BluetoothController extends GetxController {
 
       Get.snackbar(
         "Success",
-        "Data sent to ${connectedDevice!.platformName}",
+        "Data sent to ${connectedDevice.value!.platformName}",
         backgroundColor: Colors.green,
         colorText: Colors.white,
       );
@@ -117,7 +116,7 @@ class BluetoothController extends GetxController {
       debugPrint("Failed to send data: $e");
       Get.snackbar(
         "Error",
-        "Failed to send data to ${connectedDevice!.platformName}",
+        "Failed to send data to ${connectedDevice.value!.platformName}",
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -125,10 +124,10 @@ class BluetoothController extends GetxController {
   }
 
   Future<void> disconnectDevice() async {
-    if (connectedDevice != null) {
-      await connectedDevice!.disconnect();
+    if (connectedDevice.value != null) {
+      await connectedDevice.value!.disconnect();
       isConnected.value = false;
-      connectedDevice = null;
+      connectedDevice.value = null;
       characteristic = null;
 
       Get.snackbar(

@@ -222,7 +222,7 @@ class _MainScreenState extends State<MainScreen> {
 class DeviceScreen extends StatefulWidget {
   final BluetoothConnection connection;
 
-  const DeviceScreen({Key? key, required this.connection}) : super(key: key);
+  const DeviceScreen({super.key, required this.connection});
 
   @override
   _DeviceScreenState createState() => _DeviceScreenState();
@@ -312,7 +312,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                     child: const Text("Disconnect"),
                   ),
                   ElevatedButton(
-                    onPressed: () => _sendData("Teri ma ki choot"),
+                    onPressed: () => _sendData("Hello"),
                     child: const Text("Send 'hello'"),
                   ),
                 ],

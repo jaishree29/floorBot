@@ -1,10 +1,10 @@
-import 'package:floorbot/controllers/ble_controller.dart';
+import 'dart:async';
 import 'package:floorbot/utils/colors.dart';
 import 'package:floorbot/views/home/app_drawer.dart';
+import 'package:floorbot/views/navigation/navigation_control_page.dart';
 import 'package:floorbot/views/notifications/notifications.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_blue_plus/flutter_blue_plus.dart';
-import 'package:get/get.dart';
+import 'package:flutter_blue_classic/flutter_blue_classic.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:youtube_player_flutter/youtube_player_flutter.dart';
 
@@ -17,7 +17,17 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  final BluetoothController controller = Get.put(BluetoothController());
+  final _flutterBlueClassicPlugin = FlutterBlueClassic();
+
+  BluetoothAdapterState _adapterState = BluetoothAdapterState.unknown;
+  StreamSubscription? _adapterStateSubscription;
+
+  final Set<BluetoothDevice> _scanResults = {};
+  StreamSubscription? _scanSubscription;
+
+  bool _isScanning = false;
+  int? _connectingToIndex;
+  StreamSubscription? _scanningStateSubscription;
 
   late AnimationController _controller;
   late Animation<Offset> _animation;
@@ -36,6 +46,7 @@ class _HomePageState extends State<HomePage>
   void initState() {
     super.initState();
     _requestPermissions();
+    _initBluetooth();
     _controller = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -60,11 +71,37 @@ class _HomePageState extends State<HomePage>
     ].request();
   }
 
-  @override
-  void dispose() {
-    _controller.dispose();
-    _yController.dispose();
-    super.dispose();
+  Future<void> _initBluetooth() async {
+    await _requestPermissions();
+    await _checkBluetoothState();
+
+    try {
+      _adapterState = await _flutterBlueClassicPlugin.adapterStateNow;
+      _adapterStateSubscription =
+          _flutterBlueClassicPlugin.adapterState.listen((current) {
+        if (mounted) setState(() => _adapterState = current);
+      });
+      _scanSubscription =
+          _flutterBlueClassicPlugin.scanResults.listen((device) {
+        if (mounted) setState(() => _scanResults.add(device));
+      });
+      _scanningStateSubscription =
+          _flutterBlueClassicPlugin.isScanning.listen((isScanning) {
+        if (mounted) setState(() => _isScanning = isScanning);
+      });
+    } catch (e) {
+      print("Bluetooth initialization error: $e");
+    }
+  }
+
+  Future<void> _checkBluetoothState() async {
+    BluetoothAdapterState adapterState =
+        await _flutterBlueClassicPlugin.adapterStateNow;
+
+    if (adapterState != BluetoothAdapterState.on) {
+      _flutterBlueClassicPlugin.turnOn();
+      await Future.delayed(const Duration(seconds: 2));
+    }
   }
 
   void _toggleDrawer() {
@@ -79,9 +116,22 @@ class _HomePageState extends State<HomePage>
   }
 
   @override
+  void dispose() {
+    _adapterStateSubscription?.cancel();
+    _scanSubscription?.cancel();
+    _scanningStateSubscription?.cancel();
+    _controller.dispose();
+    _yController.dispose();
+    _adapterState;
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final videoHeight = screenHeight * 0.25;
+    List<BluetoothDevice> scanResults = _scanResults.toList();
+
     return Scaffold(
       appBar: AppBar(
         surfaceTintColor: Colors.white24,
@@ -177,7 +227,7 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
-                // Other content can go here
+                // Other content
                 const SizedBox(height: 20),
                 Text(
                   'Welcome to FloorBot',
@@ -213,18 +263,12 @@ class _HomePageState extends State<HomePage>
                 ),
                 const SizedBox(height: 20),
                 ElevatedButton(
-                  onPressed: () async {
-                    if (await Permission.bluetoothScan.isGranted &&
-                        await Permission.bluetoothConnect.isGranted &&
-                        await Permission.locationWhenInUse.isGranted) {
-                      controller.scanDevices();
+                  onPressed: () {
+                    if (_isScanning) {
+                      _flutterBlueClassicPlugin.stopScan();
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Permissions not granted'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      _scanResults.clear();
+                      _flutterBlueClassicPlugin.startScan();
                     }
                   },
                   style: ElevatedButton.styleFrom(
@@ -238,7 +282,7 @@ class _HomePageState extends State<HomePage>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 60.0, vertical: 10),
                     child: Text(
-                      'Scan for devices',
+                      _isScanning ? 'Scanning...' : 'Scan for devices',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 20,
@@ -263,7 +307,7 @@ class _HomePageState extends State<HomePage>
                     ),
                   ),
                 ),
-                _buildList(context),
+                _buildDeviceList(scanResults),
                 const SizedBox(height: 30),
               ],
             ),
@@ -283,98 +327,62 @@ class _HomePageState extends State<HomePage>
     );
   }
 
-  Widget _buildList(BuildContext context) {
-    return GetBuilder<BluetoothController>(
-      builder: (controller) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              StreamBuilder<List<ScanResult>>(
-                stream: controller.scanResult,
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
-                    return const Center(child: CircularProgressIndicator());
-                  } else if (snapshot.hasError) {
-                    return Center(
-                      child: Text(
-                        'Error: ${snapshot.error}',
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    );
-                  } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                    return Card(
-                      color: FColors.primary.withOpacity(0.2),
-                      elevation: 0,
-                      // margin: const EdgeInsets.symmetric(vertical: 5),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: ListTile(
-                        contentPadding: const EdgeInsets.all(12),
-                        title: Center(
-                          child: Text(
-                            'No devices found',
-                          ),
-                        ),
-                      ),
-                    );
-                  }
-
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: snapshot.data!.length,
-                    itemBuilder: (context, index) {
-                      final data = snapshot.data![index];
-                      ScanResult r = snapshot.data!.last;
-                      print(
-                          '${r.device.remoteId}: "${r.advertisementData.advName}" found!');
-                      return Card(
-                        color: FColors.primary.withOpacity(0.1),
-                        elevation: 0,
-                        margin: const EdgeInsets.symmetric(vertical: 5),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: ListTile(
-                          contentPadding: const EdgeInsets.all(12),
-                          title: Text(
-                            data.device.platformName.isNotEmpty
-                                ? data.device.platformName
-                                : "Unknown Device",
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          subtitle: Text(data.device.remoteId.str),
-                          trailing: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text("RSSI: ${data.rssi}"),
-                              const SizedBox(width: 10),
-                              ElevatedButton(
-                                onPressed: () async {
-                                  await controller.connectToDevice(data.device);
-                                  if (controller.isConnected.value) {
-                                    // Send text to the connected device
-                                    await controller
-                                        .sendTextToDevice("Hello, Device!");
-                                  }
-                                },
-                                child: const Text('Connect'),
-                              ),
-                            ],
-                          ),
-                        ),
+  Widget _buildDeviceList(List<BluetoothDevice> scanResults) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          if (scanResults.isEmpty)
+            const Center(child: Text("No devices found yet"))
+          else
+            for (var (index, result) in scanResults.indexed)
+              Card(
+                color: FColors.primary.withOpacity(0.1),
+                elevation: 0,
+                margin: const EdgeInsets.symmetric(vertical: 5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(12),
+                  title: Text(
+                    "${result.name ?? "???"} (${result.address})",
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                      "Bondstate: ${result.bondState.name}, Device type: ${result.type.name}"),
+                  trailing: index == _connectingToIndex
+                      ? const CircularProgressIndicator()
+                      : Text("${result.rssi} dBm"),
+                  onTap: () async {
+                    setState(() => _connectingToIndex = index);
+                    try {
+                      final connection =
+                          await _flutterBlueClassicPlugin.connect(
+                        result.address,
                       );
-                    },
-                  );
-                },
+                      if (connection!.isConnected) {
+                        setState(() => _connectingToIndex = null);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                NavigationControlPage(connection: connection),
+                          ),
+                        );
+                      }
+                    } catch (e) {
+                      setState(() => _connectingToIndex = null);
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text("Error connecting: $e")),
+                      );
+                    }
+                  },
+                ),
               ),
-            ],
-          ),
-        );
-      },
+        ],
+      ),
     );
   }
 }
